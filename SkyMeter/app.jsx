@@ -15,12 +15,13 @@ import {
   Moon,
   AlertTriangle,
   Loader2,
-  Activity
+  Activity,
+  ChevronRight,
+  Info
 } from 'lucide-react';
 
 // --- Utility Functions ---
 
-// Map WMO Weather codes to descriptions and icons
 const getWeatherDetails = (code, isDay) => {
   const codes = {
     0: { desc: 'Clear sky', icon: isDay ? Sun : Moon },
@@ -55,61 +56,80 @@ const getWeatherDetails = (code, isDay) => {
   return codes[code] || { desc: 'Unknown', icon: Cloud };
 };
 
-// Calculate AQI category, colors, and health advice based on US EPA scale
 const getAqiDetails = (aqi) => {
-  if (aqi <= 50) return { label: 'Good', color: 'bg-green-500', text: 'text-green-500', border: 'border-green-500', advice: 'Air quality is satisfactory, and air pollution poses little or no risk.' };
-  if (aqi <= 100) return { label: 'Moderate', color: 'bg-yellow-500', text: 'text-yellow-500', border: 'border-yellow-500', advice: 'Air quality is acceptable. However, there may be a risk for some people, particularly those who are unusually sensitive to air pollution.' };
-  if (aqi <= 150) return { label: 'Unhealthy for Sensitive Groups', color: 'bg-orange-500', text: 'text-orange-500', border: 'border-orange-500', advice: 'Members of sensitive groups may experience health effects. The general public is less likely to be affected.' };
-  if (aqi <= 200) return { label: 'Unhealthy', color: 'bg-red-500', text: 'text-red-500', border: 'border-red-500', advice: 'Some members of the general public may experience health effects; members of sensitive groups may experience more serious health effects.' };
-  if (aqi <= 300) return { label: 'Very Unhealthy', color: 'bg-purple-500', text: 'text-purple-500', border: 'border-purple-500', advice: 'Health alert: The risk of health effects is increased for everyone.' };
-  return { label: 'Hazardous', color: 'bg-rose-900', text: 'text-rose-900', border: 'border-rose-900', advice: 'Health warning of emergency conditions: everyone is more likely to be affected.' };
+  if (aqi <= 50) return { label: 'Good', color: 'bg-emerald-500', text: 'text-emerald-400', border: 'border-emerald-500', shadow: 'shadow-emerald-500/20', advice: 'Air quality is satisfactory, and air pollution poses little or no risk.' };
+  if (aqi <= 100) return { label: 'Moderate', color: 'bg-yellow-400', text: 'text-yellow-400', border: 'border-yellow-400', shadow: 'shadow-yellow-400/20', advice: 'Air quality is acceptable. However, there may be a risk for some people, particularly those who are unusually sensitive to air pollution.' };
+  if (aqi <= 150) return { label: 'Unhealthy for Sensitive Groups', color: 'bg-orange-500', text: 'text-orange-400', border: 'border-orange-500', shadow: 'shadow-orange-500/20', advice: 'Members of sensitive groups may experience health effects. The general public is less likely to be affected.' };
+  if (aqi <= 200) return { label: 'Unhealthy', color: 'bg-red-500', text: 'text-red-400', border: 'border-red-500', shadow: 'shadow-red-500/20', advice: 'Some members of the general public may experience health effects; members of sensitive groups may experience more serious health effects.' };
+  if (aqi <= 300) return { label: 'Very Unhealthy', color: 'bg-purple-500', text: 'text-purple-400', border: 'border-purple-500', shadow: 'shadow-purple-500/20', advice: 'Health alert: The risk of health effects is increased for everyone.' };
+  return { label: 'Hazardous', color: 'bg-rose-600', text: 'text-rose-500', border: 'border-rose-600', shadow: 'shadow-rose-600/20', advice: 'Health warning of emergency conditions: everyone is more likely to be affected.' };
 };
 
 // --- Components ---
 
-// Visual meter for the AQI
 const AqiMeter = ({ aqi }) => {
-  // Clamp AQI to 500 for the visual bar positioning
   const clampedAqi = Math.min(Math.max(aqi, 0), 500);
   const percentage = (clampedAqi / 500) * 100;
   const aqiInfo = getAqiDetails(aqi);
 
   return (
-    <div className="w-full mt-6">
-      <div className="flex justify-between items-end mb-2">
-        <span className="text-sm font-semibold text-slate-400 uppercase tracking-wider">AQI Scale (US)</span>
-        <span className={`text-2xl font-bold ${aqiInfo.text}`}>{aqi}</span>
-      </div>
-      
-      {/* The Gradient Bar */}
-      <div className="relative h-4 rounded-full w-full bg-gradient-to-r from-green-500 via-yellow-400 via-orange-500 via-red-500 via-purple-500 to-rose-900 shadow-inner">
-        {/* The Indicator Pointer */}
-        <div 
-          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-6 bg-white border-2 border-slate-900 rounded-sm shadow-md transition-all duration-1000 ease-out z-10"
-          style={{ left: `${percentage}%` }}
-        ></div>
-      </div>
-      
-      <div className="flex justify-between text-xs text-slate-500 mt-2 font-medium">
-        <span>0</span>
-        <span>50</span>
-        <span>100</span>
-        <span>150</span>
-        <span>200</span>
-        <span>300</span>
-        <span>500+</span>
+    <div className="w-full flex flex-col h-full justify-between">
+      <div>
+        <div className="flex justify-between items-start mb-6">
+          <div>
+            <h3 className="text-lg font-medium text-slate-300 flex items-center gap-2">
+              <Activity className="w-5 h-5 text-slate-400" />
+              Air Quality Index
+            </h3>
+            <p className="text-sm text-slate-500 mt-1">US EPA Standard</p>
+          </div>
+          <div className={`px-4 py-2 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3 backdrop-blur-sm shadow-lg ${aqiInfo.shadow}`}>
+            <span className={`text-3xl font-bold ${aqiInfo.text} tracking-tight`}>{aqi}</span>
+            <div className="h-8 w-px bg-white/10"></div>
+            <span className={`text-sm font-semibold uppercase tracking-wider ${aqiInfo.text}`}>{aqiInfo.label}</span>
+          </div>
+        </div>
+        
+        {/* Modern Stepped Gradient Bar */}
+        <div className="relative h-3 rounded-full w-full bg-gradient-to-r from-emerald-500 via-yellow-400 via-orange-500 via-red-500 via-purple-500 to-rose-600 shadow-inner mt-8">
+          <div 
+            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 bg-white border-[3px] border-slate-900 rounded-full shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all duration-1000 ease-out z-10"
+            style={{ left: `${percentage}%` }}
+          ></div>
+        </div>
+        
+        <div className="flex justify-between text-[10px] text-slate-500 mt-3 font-bold px-1">
+          <span>0</span>
+          <span>50</span>
+          <span>100</span>
+          <span>150</span>
+          <span>200</span>
+          <span>300</span>
+          <span>500+</span>
+        </div>
       </div>
 
-      <div className={`mt-4 p-4 rounded-xl border border-slate-700/50 bg-slate-800/50`}>
-        <div className="flex items-center gap-2 mb-1">
-          <Activity className={`w-5 h-5 ${aqiInfo.text}`} />
-          <h4 className={`font-bold ${aqiInfo.text}`}>{aqiInfo.label}</h4>
-        </div>
-        <p className="text-sm text-slate-300 leading-relaxed">{aqiInfo.advice}</p>
+      <div className={`mt-8 p-4 rounded-2xl bg-gradient-to-br from-white/[0.03] to-transparent border border-white/[0.05] flex items-start gap-3`}>
+        <Info className={`w-5 h-5 mt-0.5 shrink-0 ${aqiInfo.text}`} />
+        <p className="text-sm text-slate-400 leading-relaxed">{aqiInfo.advice}</p>
       </div>
     </div>
   );
 };
+
+const PollutantCard = ({ name, value, unit, desc, status }) => (
+  <div className="bg-white/[0.02] hover:bg-white/[0.04] border border-white/[0.05] rounded-2xl p-4 flex flex-col transition-all duration-300 group">
+    <div className="flex justify-between items-start mb-3">
+      <span className="font-semibold text-slate-300 group-hover:text-white transition-colors">{name}</span>
+      <div className={`w-2 h-2 rounded-full mt-1.5 shadow-lg ${status === 'good' ? 'bg-emerald-500 shadow-emerald-500/50' : 'bg-red-500 shadow-red-500/50'}`}></div>
+    </div>
+    <div className="flex items-baseline gap-1 mt-auto">
+      <span className="text-2xl font-bold text-white tracking-tight">{value ?? '--'}</span>
+      <span className="text-xs text-slate-500 font-medium">{unit}</span>
+    </div>
+    <span className="text-xs text-slate-500 truncate mt-1 group-hover:text-slate-400 transition-colors" title={desc}>{desc}</span>
+  </div>
+);
 
 export default function App() {
   const [locationInfo, setLocationInfo] = useState({ name: 'Patna', lat: 25.6022, lon: 85.1194, country: 'India' });
@@ -121,17 +141,14 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch data from Open-Meteo APIs
   const fetchWeatherData = async (lat, lon, locName) => {
     setLoading(true);
     setError(null);
     try {
-      // 1. Fetch Weather
       const weatherRes = await fetch(
         `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto`
       );
       
-      // 2. Fetch AQI
       const aqiRes = await fetch(
         `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=us_aqi,pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone&timezone=auto`
       );
@@ -144,25 +161,23 @@ export default function App() {
       setWeather(weatherJson.current);
       setAqiData(aqiJson.current);
       
-      // Map daily forecast
       const daily = weatherJson.daily.time.map((time, index) => ({
         time,
         maxTemp: weatherJson.daily.temperature_2m_max[index],
         minTemp: weatherJson.daily.temperature_2m_min[index],
         weatherCode: weatherJson.daily.weather_code[index]
-      })).slice(0, 5); // Get next 5 days
+      })).slice(0, 6); 
       
       setDailyForecast(daily);
       
     } catch (err) {
-      setError("Unable to load data. Please try again later.");
+      setError("Unable to load atmospheric data. Please try again.");
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  // Search for a city using Open-Meteo Geocoding
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
@@ -185,16 +200,15 @@ export default function App() {
         fetchWeatherData(newLoc.lat, newLoc.lon, newLoc.name);
         setSearchQuery('');
       } else {
-        setError(`City "${searchQuery}" not found.`);
+        setError(`Location "${searchQuery}" could not be found.`);
         setLoading(false);
       }
     } catch (err) {
-      setError("Error searching for city.");
+      setError("Network error while searching for location.");
       setLoading(false);
     }
   };
 
-  // Get User's Geolocation
   const handleGeolocation = () => {
     if ("geolocation" in navigator) {
       setLoading(true);
@@ -202,9 +216,7 @@ export default function App() {
         async (position) => {
           const lat = position.coords.latitude;
           const lon = position.coords.longitude;
-          
           try {
-             // Reverse geocoding (rough approximation using the search API, though open-meteo doesn't have a direct reverse geocoding, we can just use Coordinates as name)
              setLocationInfo({ name: "Current Location", lat, lon, country: "GPS" });
              fetchWeatherData(lat, lon, "Current Location");
           } catch(err) {
@@ -222,233 +234,206 @@ export default function App() {
     }
   };
 
-  // Initial Load
   useEffect(() => {
     fetchWeatherData(locationInfo.lat, locationInfo.lon, locationInfo.name);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-
   const WeatherIcon = weather ? getWeatherDetails(weather.weather_code, weather.is_day).icon : Cloud;
   const weatherDesc = weather ? getWeatherDetails(weather.weather_code, weather.is_day).desc : '';
+  const isDayTheme = weather?.is_day === 1;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-blue-500/30">
+    <div className={`min-h-screen transition-colors duration-1000 ease-in-out ${isDayTheme ? 'bg-[#0f172a]' : 'bg-[#020617]'} text-slate-100 font-sans selection:bg-blue-500/30 overflow-x-hidden relative`}>
       
-      {/* Navbar / Header */}
-      <nav className="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-blue-400">
-            <CloudLightning className="w-8 h-8" />
-            <h1 className="text-xl font-bold tracking-tight text-white">SkyMeter<span className="text-blue-500">.</span></h1>
+      {/* Dynamic Background Effects */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className={`absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full blur-[120px] opacity-20 ${isDayTheme ? 'bg-blue-400' : 'bg-indigo-600'}`}></div>
+        <div className={`absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full blur-[150px] opacity-20 ${isDayTheme ? 'bg-teal-400' : 'bg-purple-800'}`}></div>
+        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] mix-blend-overlay"></div>
+      </div>
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col min-h-screen">
+        
+        {/* Premium Header & Search */}
+        <header className="flex flex-col md:flex-row items-center justify-between gap-6 mb-12">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+              <CloudLightning className="w-6 h-6 text-white" />
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight text-white">Sky<span className="text-blue-400">Meter</span></h1>
           </div>
 
-          <form onSubmit={handleSearch} className="flex w-full md:w-auto relative">
-            <input
-              type="text"
-              placeholder="Search city (e.g. London, Tokyo)"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full md:w-80 bg-slate-800 text-white border border-slate-700 rounded-l-lg py-2 px-4 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            />
-            <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-            <button 
-              type="submit" 
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-r-lg font-medium transition-colors"
-            >
-              Search
-            </button>
-            <button 
-              type="button"
-              onClick={handleGeolocation}
-              title="Use my location"
-              className="ml-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 p-2.5 rounded-lg transition-colors flex items-center justify-center group"
-            >
-              <Navigation className="w-5 h-5 group-hover:text-blue-400 transition-colors" />
-            </button>
+          <form onSubmit={handleSearch} className="w-full md:w-[480px] relative group">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-teal-400 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
+            <div className="relative flex items-center bg-[#1e293b]/80 backdrop-blur-xl border border-white/10 rounded-2xl p-1.5 shadow-2xl">
+              <Search className="w-5 h-5 text-slate-400 ml-3" />
+              <input
+                type="text"
+                placeholder="Search globally (e.g., Tokyo, Paris)"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-transparent text-white placeholder-slate-400 px-3 py-2.5 focus:outline-none"
+              />
+              <button 
+                type="button"
+                onClick={handleGeolocation}
+                title="Current Location"
+                className="p-2.5 bg-white/5 hover:bg-white/10 text-slate-300 hover:text-blue-400 rounded-xl transition-all mr-1"
+              >
+                <Navigation className="w-4 h-4" />
+              </button>
+              <button 
+                type="submit" 
+                className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-medium transition-colors shadow-lg shadow-blue-500/20"
+              >
+                Find
+              </button>
+            </div>
           </form>
-        </div>
-      </nav>
+        </header>
 
-      {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-4 py-8">
-        
-        {/* Error Message */}
+        {/* Error Handling */}
         {error && (
-          <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
-            <AlertTriangle className="w-5 h-5" />
-            <p>{error}</p>
+          <div className="mb-8 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
+            <AlertTriangle className="w-5 h-5 shrink-0" />
+            <p className="font-medium">{error}</p>
           </div>
         )}
 
         {/* Loading State */}
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="w-12 h-12 text-blue-500 animate-spin mb-4" />
-            <p className="text-slate-400 animate-pulse">Gathering atmospheric data...</p>
+          <div className="flex-1 flex flex-col items-center justify-center">
+            <div className="relative">
+              <div className="absolute inset-0 rounded-full blur-xl bg-blue-500/20 animate-pulse"></div>
+              <Loader2 className="w-12 h-12 text-blue-400 animate-spin relative z-10" />
+            </div>
+            <p className="text-slate-400 mt-6 font-medium animate-pulse tracking-wide">Syncing atmosphere data...</p>
           </div>
         ) : weather && aqiData ? (
-          <div className="space-y-6">
+          
+          <main className="flex-1 flex flex-col gap-6 animate-in fade-in duration-700">
             
-            {/* Location Header */}
-            <div className="flex items-center gap-2 mb-2">
-              <MapPin className="w-5 h-5 text-blue-400" />
-              <h2 className="text-3xl font-bold">{locationInfo.name}</h2>
-              {locationInfo.country && <span className="text-slate-400 text-lg font-medium">, {locationInfo.country}</span>}
+            {/* Location Title */}
+            <div className="flex items-end gap-3 px-2">
+              <MapPin className="w-6 h-6 text-blue-400 mb-1" />
+              <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-white">{locationInfo.name}</h2>
+              {locationInfo.country && <span className="text-xl md:text-2xl font-medium text-slate-500 mb-1">{locationInfo.country}</span>}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Bento Grid Layout */}
+            <div className="grid grid-cols-12 gap-6 mt-4">
               
-              {/* Left Column: Current Weather */}
-              <div className="lg:col-span-1 space-y-6">
+              {/* Box 1: Primary Weather (Spans 4 cols on desktop) */}
+              <div className="col-span-12 lg:col-span-4 bg-[#1e293b]/40 backdrop-blur-2xl border border-white/5 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-6 opacity-20 group-hover:opacity-40 group-hover:scale-110 transition-all duration-700">
+                  <WeatherIcon className="w-48 h-48 text-blue-400 drop-shadow-2xl" strokeWidth={1} />
+                </div>
                 
-                {/* Primary Weather Card */}
-                <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700/50 rounded-3xl p-6 shadow-xl relative overflow-hidden group">
-                  {/* Decorative background blur */}
-                  <div className="absolute -top-20 -right-20 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl group-hover:bg-blue-500/20 transition-all duration-700"></div>
-                  
-                  <div className="relative z-10 flex flex-col items-center text-center">
-                    <WeatherIcon className="w-24 h-24 text-blue-400 drop-shadow-lg mb-4" strokeWidth={1.5} />
-                    <div className="text-6xl font-black tracking-tighter mb-2">
-                      {Math.round(weather.temperature_2m)}°
+                <div className="relative z-10 flex flex-col h-full justify-between">
+                  <div>
+                    <h3 className="text-lg font-medium text-slate-400 flex items-center gap-2 mb-8">
+                      <Thermometer className="w-5 h-5" />
+                      Current Conditions
+                    </h3>
+                    
+                    <div className="flex items-start gap-2">
+                      <span className="text-7xl md:text-8xl font-black tracking-tighter text-white">
+                        {Math.round(weather.temperature_2m)}
+                      </span>
+                      <span className="text-4xl font-bold text-blue-400 mt-2">°C</span>
                     </div>
-                    <p className="text-xl font-medium text-slate-300 capitalize">{weatherDesc}</p>
-                    <p className="text-slate-500 mt-1 text-sm">Feels like {Math.round(weather.apparent_temperature)}°C</p>
+                    
+                    <p className="text-2xl font-semibold text-white capitalize mt-2">{weatherDesc}</p>
+                    <p className="text-slate-400 mt-1">Feels like {Math.round(weather.apparent_temperature)}°</p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 mt-8 relative z-10 border-t border-slate-700/50 pt-6">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-500/10 rounded-lg">
-                        <Droplets className="w-5 h-5 text-blue-400" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Humidity</p>
-                        <p className="font-semibold text-lg">{weather.relative_humidity_2m}%</p>
-                      </div>
+                  <div className="grid grid-cols-2 gap-4 mt-12 bg-white/[0.03] rounded-2xl p-4 border border-white/[0.05]">
+                    <div>
+                      <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1 flex items-center gap-1.5"><Droplets className="w-3.5 h-3.5 text-blue-400" /> Humidity</p>
+                      <p className="font-semibold text-lg text-white">{weather.relative_humidity_2m}%</p>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-teal-500/10 rounded-lg">
-                        <Wind className="w-5 h-5 text-teal-400" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Wind</p>
-                        <p className="font-semibold text-lg">{weather.wind_speed_10m} <span className="text-sm text-slate-500">km/h</span></p>
-                      </div>
+                    <div>
+                      <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1 flex items-center gap-1.5"><Wind className="w-3.5 h-3.5 text-teal-400" /> Wind</p>
+                      <p className="font-semibold text-lg text-white">{weather.wind_speed_10m} <span className="text-sm text-slate-500">km/h</span></p>
                     </div>
                   </div>
                 </div>
+              </div>
 
-                {/* 5-Day Forecast Card */}
-                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-lg">
-                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <Cloud className="w-5 h-5 text-slate-400" />
-                    5-Day Forecast
+              {/* Box 2: AQI Meter (Spans 8 cols) */}
+              <div className="col-span-12 lg:col-span-8 bg-[#1e293b]/40 backdrop-blur-2xl border border-white/5 rounded-[2rem] p-8 shadow-2xl">
+                <AqiMeter aqi={aqiData.us_aqi} />
+              </div>
+
+              {/* Box 3: 6-Day Forecast (Spans 8 cols) */}
+              <div className="col-span-12 lg:col-span-8 bg-[#1e293b]/40 backdrop-blur-2xl border border-white/5 rounded-[2rem] p-6 shadow-2xl overflow-hidden">
+                <div className="flex items-center justify-between mb-6 px-2">
+                  <h3 className="text-lg font-medium text-slate-300 flex items-center gap-2">
+                    <Cloud className="w-5 h-5 text-blue-400" />
+                    Extended Forecast
                   </h3>
-                  <div className="space-y-4">
-                    {dailyForecast.map((day, idx) => {
-                      const date = new Date(day.time);
-                      const DayIcon = getWeatherDetails(day.weatherCode, 1).icon;
-                      return (
-                        <div key={idx} className="flex items-center justify-between">
-                          <span className="w-12 text-slate-400 font-medium">
-                            {idx === 0 ? 'Today' : date.toLocaleDateString('en-US', { weekday: 'short' })}
-                          </span>
-                          <DayIcon className="w-5 h-5 text-slate-300" />
-                          <div className="flex gap-3 text-sm font-medium w-24 justify-end">
-                            <span className="text-white">{Math.round(day.maxTemp)}°</span>
-                            <span className="text-slate-500">{Math.round(day.minTemp)}°</span>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
+                  <button className="text-sm text-slate-500 hover:text-white flex items-center transition-colors">
+                    Details <ChevronRight className="w-4 h-4 ml-1" />
+                  </button>
                 </div>
-
-              </div>
-
-              {/* Right Column: AQI & Details */}
-              <div className="lg:col-span-2 space-y-6">
                 
-                {/* AQI Meter Card */}
-                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-lg">
-                  <h3 className="text-2xl font-bold mb-1">Air Quality Index</h3>
-                  <p className="text-slate-400 text-sm mb-6">Real-time air pollution metrics and health advisories.</p>
-                  
-                  <AqiMeter aqi={aqiData.us_aqi} />
-
-                  {/* Pollutant Grid */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-8">
-                    <PollutantCard 
-                      name="PM2.5" 
-                      value={aqiData.pm2_5} 
-                      unit="µg/m³" 
-                      desc="Fine Particles" 
-                      status={aqiData.pm2_5 > 35 ? 'poor' : 'good'} 
-                    />
-                    <PollutantCard 
-                      name="PM10" 
-                      value={aqiData.pm10} 
-                      unit="µg/m³" 
-                      desc="Coarse Particles"
-                      status={aqiData.pm10 > 150 ? 'poor' : 'good'} 
-                    />
-                    <PollutantCard 
-                      name="O₃" 
-                      value={aqiData.ozone} 
-                      unit="µg/m³" 
-                      desc="Ozone"
-                      status={aqiData.ozone > 100 ? 'poor' : 'good'} 
-                    />
-                    <PollutantCard 
-                      name="NO₂" 
-                      value={aqiData.nitrogen_dioxide} 
-                      unit="µg/m³" 
-                      desc="Nitrogen Dioxide"
-                      status={aqiData.nitrogen_dioxide > 100 ? 'poor' : 'good'} 
-                    />
-                    <PollutantCard 
-                      name="SO₂" 
-                      value={aqiData.sulphur_dioxide} 
-                      unit="µg/m³" 
-                      desc="Sulphur Dioxide"
-                      status={aqiData.sulphur_dioxide > 75 ? 'poor' : 'good'} 
-                    />
-                    <PollutantCard 
-                      name="CO" 
-                      value={aqiData.carbon_monoxide} 
-                      unit="µg/m³" 
-                      desc="Carbon Monoxide"
-                      status={aqiData.carbon_monoxide > 10000 ? 'poor' : 'good'} 
-                    />
-                  </div>
+                <div className="flex overflow-x-auto pb-4 pt-2 gap-4 snap-x hide-scrollbar">
+                  {dailyForecast.map((day, idx) => {
+                    const date = new Date(day.time);
+                    const DayIcon = getWeatherDetails(day.weatherCode, 1).icon;
+                    const isToday = idx === 0;
+                    
+                    return (
+                      <div key={idx} className={`snap-center shrink-0 w-[110px] flex flex-col items-center p-4 rounded-2xl border ${isToday ? 'bg-blue-500/10 border-blue-500/30' : 'bg-white/[0.02] border-white/[0.05] hover:bg-white/[0.05]'} transition-colors`}>
+                        <span className={`text-sm font-semibold mb-3 ${isToday ? 'text-blue-400' : 'text-slate-400'}`}>
+                          {isToday ? 'Today' : date.toLocaleDateString('en-US', { weekday: 'short' })}
+                        </span>
+                        <DayIcon className={`w-8 h-8 mb-4 ${isToday ? 'text-blue-300' : 'text-slate-300'}`} strokeWidth={1.5} />
+                        <div className="flex flex-col items-center gap-1">
+                          <span className="text-lg font-bold text-white">{Math.round(day.maxTemp)}°</span>
+                          <span className="text-sm font-medium text-slate-500">{Math.round(day.minTemp)}°</span>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
-
               </div>
+
+              {/* Box 4: Pollutants Grid (Spans 4 cols) */}
+              <div className="col-span-12 lg:col-span-4 bg-[#1e293b]/40 backdrop-blur-2xl border border-white/5 rounded-[2rem] p-6 shadow-2xl flex flex-col">
+                <h3 className="text-lg font-medium text-slate-300 mb-6 px-2">Pollutant Breakdown</h3>
+                <div className="grid grid-cols-2 gap-3 flex-1">
+                  <PollutantCard name="PM2.5" value={aqiData.pm2_5} unit="µg/m³" desc="Fine Particles" status={aqiData.pm2_5 > 35 ? 'poor' : 'good'} />
+                  <PollutantCard name="PM10" value={aqiData.pm10} unit="µg/m³" desc="Coarse Particles" status={aqiData.pm10 > 150 ? 'poor' : 'good'} />
+                  <PollutantCard name="O₃" value={aqiData.ozone} unit="µg/m³" desc="Ozone" status={aqiData.ozone > 100 ? 'poor' : 'good'} />
+                  <PollutantCard name="NO₂" value={aqiData.nitrogen_dioxide} unit="µg/m³" desc="Nitrogen Dioxide" status={aqiData.nitrogen_dioxide > 100 ? 'poor' : 'good'} />
+                </div>
+              </div>
+
             </div>
-          </div>
+          </main>
         ) : null}
-      </main>
-      
-      <footer className="border-t border-slate-800 py-6 mt-auto">
-        <div className="max-w-6xl mx-auto px-4 text-center text-slate-500 text-sm">
-          <p>Data provided seamlessly via <a href="https://open-meteo.com" className="text-blue-400 hover:underline">Open-Meteo API</a>. No API Keys required.</p>
-        </div>
-      </footer>
+
+        {/* Footer */}
+        <footer className="mt-auto pt-12 pb-4 text-center">
+          <p className="text-slate-600 text-sm font-medium flex items-center justify-center gap-2">
+            Data seamlessly provided by <a href="https://open-meteo.com" className="text-blue-500 hover:text-blue-400 transition-colors">Open-Meteo</a>
+          </p>
+        </footer>
+
+      </div>
+
+      {/* Global styles for hiding scrollbar in forecast */}
+      <style dangerouslySetInnerHTML={{__html: `
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}} />
     </div>
   );
 }
-
-// Small sub-component for pollutants
-const PollutantCard = ({ name, value, unit, desc, status }) => (
-  <div className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 flex flex-col hover:bg-slate-800 transition-colors">
-    <div className="flex justify-between items-start mb-2">
-      <span className="font-bold text-slate-200">{name}</span>
-      <div className={`w-2 h-2 rounded-full mt-1 ${status === 'good' ? 'bg-green-500' : 'bg-red-500'}`}></div>
-    </div>
-    <div className="flex items-baseline gap-1 mb-1">
-      <span className="text-2xl font-bold text-white">{value ?? '--'}</span>
-      <span className="text-xs text-slate-400">{unit}</span>
-    </div>
-    <span className="text-xs text-slate-500 truncate" title={desc}>{desc}</span>
-  </div>
-);
