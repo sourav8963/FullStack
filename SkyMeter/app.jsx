@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Search, 
   MapPin, 
@@ -138,8 +138,55 @@ export default function App() {
   const [dailyForecast, setDailyForecast] = useState([]);
   
   const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchRef = useRef(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Fetch Autocomplete Suggestions (Debounced)
+  useEffect(() => {
+    // Skip fetching if the query exactly matches the current location (prevents re-opening after selection)
+    if (searchQuery === locationInfo.name) return;
+
+    const fetchSuggestions = async () => {
+      if (searchQuery.trim().length < 2) {
+        setSuggestions([]);
+        return;
+      }
+      try {
+        // Using Open-Meteo geocoding here because it naturally ranks by population ("most famous")
+        const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchQuery)}&count=10&language=en&format=json`);
+        const data = await res.json();
+        
+        if (data.results) {
+          // Filter strictly for India and take top 5 famous results
+          const indianResults = data.results.filter(r => r.country_code === 'IN').slice(0, 5);
+          setSuggestions(indianResults);
+          setShowSuggestions(true);
+        } else {
+          setSuggestions([]);
+        }
+      } catch (err) {
+        console.error("Autocomplete error:", err);
+      }
+    };
+
+    const timeoutId = setTimeout(fetchSuggestions, 300); // 300ms debounce
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, locationInfo.name]);
 
   const fetchWeatherData = async (lat, lon, locName) => {
     setLoading(true);
@@ -178,29 +225,47 @@ export default function App() {
     }
   };
 
+  const handleSuggestionClick = (suggestion) => {
+    const newLoc = { 
+      name: suggestion.name, 
+      lat: suggestion.latitude, 
+      lon: suggestion.longitude, 
+      country: 'India' 
+    };
+    setLocationInfo(newLoc);
+    setSearchQuery(suggestion.name);
+    setShowSuggestions(false);
+    fetchWeatherData(newLoc.lat, newLoc.lon, newLoc.name);
+  };
+
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
-
+    
+    setShowSuggestions(false);
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(searchQuery)}&count=1&language=en&format=json`);
+      // Using OpenStreetMap (Nominatim) API for high-granularity Indian locations
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&countrycodes=in&format=json&limit=1`);
       const data = await res.json();
 
-      if (data.results && data.results.length > 0) {
-        const result = data.results[0];
+      if (data && data.length > 0) {
+        const result = data[0];
+        // Extract the most relevant short name from the OSM display name
+        const shortName = result.display_name.split(',')[0];
+        
         const newLoc = { 
-          name: result.name, 
-          lat: result.latitude, 
-          lon: result.longitude, 
-          country: result.country 
+          name: shortName, 
+          lat: parseFloat(result.lat), 
+          lon: parseFloat(result.lon), 
+          country: 'India' 
         };
         setLocationInfo(newLoc);
         fetchWeatherData(newLoc.lat, newLoc.lon, newLoc.name);
         setSearchQuery('');
       } else {
-        setError(`Location "${searchQuery}" could not be found.`);
+        setError(`Location "${searchQuery}" could not be found in India.`);
         setLoading(false);
       }
     } catch (err) {
@@ -264,15 +329,16 @@ export default function App() {
             <h1 className="text-2xl font-bold tracking-tight text-white">Sky<span className="text-blue-400">Meter</span></h1>
           </div>
 
-          <form onSubmit={handleSearch} className="w-full md:w-[480px] relative group">
+          <form onSubmit={handleSearch} ref={searchRef} className="w-full md:w-[480px] relative group z-50">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-teal-400 rounded-2xl blur opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
             <div className="relative flex items-center bg-[#1e293b]/80 backdrop-blur-xl border border-white/10 rounded-2xl p-1.5 shadow-2xl">
               <Search className="w-5 h-5 text-slate-400 ml-3" />
               <input
                 type="text"
-                placeholder="Search globally (e.g., Tokyo, Paris)"
+                placeholder="Search any village, town, or city in India..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
                 className="w-full bg-transparent text-white placeholder-slate-400 px-3 py-2.5 focus:outline-none"
               />
               <button 
@@ -290,6 +356,23 @@ export default function App() {
                 Find
               </button>
             </div>
+
+            {/* Autocomplete Dropdown */}
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-3 bg-[#1e293b]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                {suggestions.map((suggestion, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    className="w-full text-left px-5 py-3.5 hover:bg-white/10 transition-colors border-b border-white/5 last:border-0 flex flex-col group/item"
+                  >
+                    <span className="font-semibold text-white text-base group-hover/item:text-blue-400 transition-colors">{suggestion.name}</span>
+                    <span className="text-xs text-slate-400 mt-0.5">{suggestion.admin1 ? `${suggestion.admin1}, ` : ''}{suggestion.country}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </form>
         </header>
 
