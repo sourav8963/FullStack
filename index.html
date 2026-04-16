@@ -1,0 +1,338 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Quiz Hub | Economics & Sustainability</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --accent-primary: #8b5cf6;
+            --accent-secondary: #ec4899;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: radial-gradient(circle at top left, #1e1b4b, #0f172a, #020617);
+            background-attachment: fixed;
+            color: #f8fafc;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism Classes */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 1rem;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateY(-2px);
+            border-color: var(--accent-primary);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-primary);
+            border-radius: 10px;
+        }
+
+        /* Layout */
+        .sidebar {
+            width: 280px;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 50;
+            transition: transform 0.3s ease;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 2rem;
+            max-width: 900px;
+            margin-right: auto;
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .main-content { margin-left: 0; padding: 1rem; }
+            .mobile-toggle { display: block; }
+        }
+
+        /* Question States */
+        .option-btn {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.02);
+            transition: all 0.2s ease;
+        }
+
+        .option-btn:hover:not(.disabled) {
+            background: rgba(139, 92, 246, 0.1);
+            border-color: var(--accent-primary);
+        }
+
+        .option-btn.selected {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+        }
+
+        .option-btn.correct {
+            background: #10b981 !important;
+            border-color: #059669 !important;
+            color: white;
+        }
+
+        .option-btn.wrong {
+            background: #ef4444 !important;
+            border-color: #dc2626 !important;
+            color: white;
+        }
+
+        .explanation {
+            border-left: 4px solid var(--accent-primary);
+            margin-top: 1rem;
+            padding: 0.75rem 1rem;
+            background: rgba(139, 92, 246, 0.05);
+            display: none;
+        }
+
+        .active-section-btn {
+            background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+            color: white;
+        }
+
+        .timer-badge {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(139, 92, 246, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-950">
+
+    <!-- Mobile Header -->
+    <div class="lg:hidden fixed top-0 left-0 right-0 z-[60] glass border-none rounded-none p-4 flex justify-between items-center">
+        <button id="mobile-menu-btn" class="p-2 text-2xl text-violet-400">
+            <i class="fas fa-bars"></i>
+        </button>
+        <h1 class="font-bold text-lg bg-gradient-to-r from-violet-400 to-pink-400 bg-clip-text text-transparent">ECON QUIZ</h1>
+        <div id="mobile-timer" class="text-sm font-mono bg-violet-900/40 px-3 py-1 rounded-full border border-violet-500/30">00:00:00</div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar glass border-y-0 border-l-0 rounded-none flex flex-col">
+        <div class="p-6 border-b border-white/10">
+            <h1 class="text-2xl font-bold bg-gradient-to-r from-violet-400 to-pink-400 bg-clip-text text-transparent">
+                Study Portal
+            </h1>
+            <p class="text-xs text-slate-400 mt-1 uppercase tracking-widest">NPTEL Economics Course</p>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto p-4 space-y-2" id="sidebar-nav">
+            <!-- Navigation links will be injected here -->
+            <div class="text-xs font-semibold text-slate-500 mt-4 mb-2 ml-2">ASSIGNMENTS</div>
+            <button onclick="scrollToWeek('week0')" class="nav-link w-full text-left p-3 rounded-xl hover:bg-white/5 transition flex items-center gap-3">
+                <span class="w-8 h-8 rounded-lg bg-violet-500/20 flex items-center justify-center text-violet-400">0</span>
+                <span>Week 0: Foundation</span>
+            </button>
+            <!-- Repeating for other weeks... -->
+        </div>
+
+        <div class="p-6 border-t border-white/10">
+            <div class="flex items-center gap-3 text-sm text-slate-400 mb-4">
+                <i class="fas fa-check-circle text-green-400"></i>
+                <span id="score-counter">Score: 0/0</span>
+            </div>
+            <button onclick="resetQuiz()" class="w-full py-2 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-500/30 transition text-sm">
+                Reset Progress
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Desktop Header / Timer -->
+        <div class="hidden lg:flex justify-between items-center mb-10">
+            <div>
+                <h2 class="text-3xl font-bold">Infinite Learning Stream</h2>
+                <p class="text-slate-400">Scroll to explore all weekly assessments</p>
+            </div>
+            <div id="desktop-timer" class="timer-badge glass px-6 py-3 border-violet-500/30 flex items-center gap-4">
+                <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                <span class="font-mono text-2xl font-medium" id="timer-text">00:00:00</span>
+            </div>
+        </div>
+
+        <div id="quiz-container" class="space-y-12 pb-20">
+            <!-- Quiz sections will be injected here -->
+        </div>
+    </main>
+
+    <script>
+        const quizData = [
+            {
+                id: 'week0',
+                title: 'Week 0: Principles of Economics',
+                questions: [
+                    { q: "Which of these is true?", options: ["Wants are unlimited, resources are unlimited", "Wants are limited, resources are limited", "Wants are unlimited, resources are limited", "Wants are limited, resources are unlimited"], correct: 2 },
+                    { q: "The property of society getting the most it can from its scarce resources is a definition of:", options: ["efficiency", "equality", "prudence", "sustainability"], correct: 0 },
+                    { q: "Something that induces a person to act is a definition of:", options: ["enticement", "attraction", "incentive", "occupation"], correct: 2 },
+                    { q: "Input costs that require an outlay of money are:", options: ["explicit costs", "implicit costs", "opportunity costs", "phantom costs"], correct: 0 },
+                    { q: "The ability of an individual to own and exercise control over scarce resources is known as:", options: ["property rights", "resource rights", "individual rights", "social rights"], correct: 0 },
+                    { q: "Whatever must be given up to obtain some item is a definition of:", options: ["explicit costs", "implicit costs", "opportunity costs", "phantom costs"], correct: 2 },
+                    { q: "Most of rational thinking occurs:", options: ["before the margin", "at the margin", "after the margin", "none of these"], correct: 1 },
+                    { q: "Rational decision making compares:", options: ["average benefits to average costs", "average benefits to marginal costs", "marginal benefits to average costs", "marginal benefits to marginal costs"], correct: 3 },
+                    { q: "An economy that allocates resources through the decentralized decisions of many firms and households is a:", options: ["urban economy", "rural economy", "planned economy", "market economy"], correct: 3 },
+                    { q: "The ability to produce a good at a lower opportunity cost than another producer is a definition of:", options: ["real advantage", "monetary advantage", "comparative advantage", "opportunity advantage"], correct: 2 }
+                ]
+            },
+            {
+                id: 'week1',
+                title: 'Week 1: Foundations & Definitions',
+                questions: [
+                    { q: "In the word root for conservation, 'servare' stands for:", options: ["together", "to keep", "house", "manage"], correct: 1 },
+                    { q: "Phillips curve shows the relation between:", options: ["profit and loss", "market price and selling price", "inflation and unemployment rate", "electricity consumption and fresh output"], correct: 2 },
+                    { q: "The ability of a single economic actor to have a substantial influence on market prices is:", options: ["price power", "market power", "externality", "economic power"], correct: 1 },
+                    { q: "An increase in the overall level of prices in the economy is:", options: ["inflation", "deflation", "stagflation", "pro-inflation"], correct: 0 },
+                    { q: "In the word root for conservation, 'con' stands for:", options: ["together", "to keep", "house", "manage"], correct: 0 },
+                    { q: "Input costs that do NOT require an outlay of money are:", options: ["explicit costs", "implicit costs", "opportunity costs", "phantom costs"], correct: 1 },
+                    { q: "In the word root for Economics, 'nemein' stands for:", options: ["together", "to keep", "house", "manage"], correct: 3 },
+                    { q: "The property of distributing economic prosperity uniformly among members of society is:", options: ["efficiency", "equality", "prudence", "sustainability"], correct: 1 },
+                    { q: "In the word root for Economics, 'oikos' stands for:", options: ["together", "to keep", "house", "manage"], correct: 2 },
+                    { q: "Fluctuations in economic activity, such as employment and production, are referred to as:", options: ["business cycles", "economic cycles", "production cycles", "market cycles"], correct: 0 }
+                ]
+            },
+            {
+                id: 'week2',
+                title: 'Week 2: Sustainability & Malthusian Theory',
+                questions: [
+                    { q: "Which of these is a pillar of sustainability?", options: ["social sustainability", "industrial sustainability", "agricultural sustainability", "trans-boundary sustainability"], correct: 0 },
+                    { q: "Which of these is NOT a pillar of sustainability?", options: ["environmental sustainability", "economic sustainability", "trans-boundary sustainability", "social sustainability"], correct: 2 },
+                    { q: "Which of these is a positive check according to Malthus?", options: ["late marriage", "war", "celibacy", "moral restraint"], correct: 1 },
+                    { q: "The Trinity explosion of 1945 is taken as the beginning of the:", options: ["Holocene", "Cenozoic", "Anthropocene", "Neozoic"], correct: 2 },
+                    { q: "The demographic transition sees a society move from:", options: ["high birth, low death to low birth, high death", "low birth, high death to low birth, low death", "high birth, high death to low birth, low death", "high birth, high death to low birth, high death"], correct: 2 },
+                    { q: "The logistic growth equation curve is:", options: ["J-shaped", "S-shaped", "U-shaped", "L-shaped"], correct: 1 },
+                    { q: "According to Malthusian model:", options: ["Pop: geometric, Food: arithmetic", "Pop: arithmetic, Food: geometric", "Both arithmetic", "Both geometric"], correct: 0 },
+                    { q: "The book 'An Essay on the Principle of Population' was written by:", options: ["Darwin", "Malthus", "Spencer", "Dawkins"], correct: 1 },
+                    { q: "The quantum of human impacts can be written as:", options: ["I = P + A + T", "I = P x A x T", "I = P / (A x T)", "I = P + A x T"], correct: 1 },
+                    { q: "Which of these is a preventive check according to Malthus?", options: ["foresight", "vice", "misery", "flood"], correct: 0 }
+                ]
+            },
+            {
+                id: 'week4',
+                title: 'Week 4: Ecology & Habitats',
+                questions: [
+                    { q: "Which of these is NOT a physical factor of habitat?", options: ["soil", "moisture", "predators", "temperature"], correct: 2 },
+                    { q: "The correct process of habitat fragmentation:", options: ["Forest -> Dissection -> Perforation -> Fragmentation -> Attrition", "Forest -> Fragmentation -> Dissection -> Attrition", "Forest -> Perforation -> Attrition -> Fragmentation", "None of these"], correct: 0 },
+                    { q: "A root-mean-treatment plant is an example of:", options: ["phytoremediation", "biological control", "biomagnification", "bioaccumulation"], correct: 0 },
+                    { q: "Liebig's law of the minimum states:", options: ["Rate is limited by the factor in least amount relative to requirement", "Rate is limited by maximum factor", "Tolerance limits determine rate", "None of these"], correct: 0 },
+                    { q: "Movement of individuals away from home to survive and reproduce is:", options: ["immigration", "migration", "dispersal", "drifting"], correct: 2 },
+                    { q: "Which of these is a stochastic factor?", options: ["birth rate", "death rate", "population structure", "environmental fluctuation"], correct: 3 },
+                    { q: "Movement of lions across the Gir landscape is an example of:", options: ["diffusion", "secular dispersal", "jump dispersal", "drifting"], correct: 0 },
+                    { q: "The acronym HIPPO does NOT include:", options: ["habitat loss", "invasive species", "pollution", "pollinator"], correct: 3 },
+                    { q: "I tried growing vegetables under my teak plantation, but they died. This is:", options: ["autophagy", "stenophagy", "allelopathy", "auto-toxicity"], correct: 2 },
+                    { q: "Regular seasonal movement of animals along fixed routes is:", options: ["immigration", "migration", "dispersal", "drifting"], correct: 1 }
+                ]
+            },
+            {
+                id: 'week5',
+                title: 'Week 5: Goods & Externalities',
+                questions: [
+                    { q: "Fire protection is a:", options: ["private good", "club good", "common resource", "public good"], correct: 1 },
+                    { q: "The ability to produce a good using fewer inputs than another producer is:", options: ["comparative advantage", "absolute advantage", "production advantage", "resource advantage"], correct: 1 },
+                    { q: "Which is NOT a method of internalization of externalities?", options: ["tradable pollution permits", "charitable social causes", "command and control policies", "free market"], correct: 3 },
+                    { q: "Public goods are:", options: ["excludable, rival", "non-excludable, rival", "excludable, non-rival", "non-excludable, non-rival"], correct: 3 },
+                    { q: "Club goods are:", options: ["excludable, rival", "non-excludable, rival", "excludable, non-rival", "non-excludable, non-rival"], correct: 2 },
+                    { q: "The impact of one person's actions on the well-being of a bystander is:", options: ["actor-observer effect", "externality", "internality", "benefit principle"], correct: 1 },
+                    { q: "A simplified description of a system or process to assist calculations is a:", options: ["equation", "model", "philosophy", "process dynamics"], correct: 1 },
+                    { q: "A measure of happiness or satisfaction is:", options: ["utility", "safety", "credits", "value"], correct: 0 },
+                    { q: "Clothing is a:", options: ["private good", "club good", "common resource", "public good"], correct: 0 },
+                    { q: "Private goods are:", options: ["excludable, rival", "non-excludable, rival", "excludable, non-rival", "non-excludable, non-rival"], correct: 0 }
+                ]
+            }
+        ];
+
+        let userAnswers = {};
+        let score = 0;
+        let totalQuestions = 0;
+        let startTime = Date.now();
+
+        // Initialize Timer
+        function updateTimer() {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const h = String(Math.floor(elapsed / 3600)).padStart(2, '0');
+            const m = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
+            const s = String(elapsed % 60).padStart(2, '0');
+            const timeStr = `${h}:${m}:${s}`;
+            document.getElementById('timer-text').textContent = timeStr;
+            document.getElementById('mobile-timer').textContent = timeStr;
+        }
+        setInterval(updateTimer, 1000);
+
+        // Render Sidebar
+        function renderSidebar() {
+            const nav = document.getElementById('sidebar-nav');
+            nav.innerHTML = '<div class="text-xs font-semibold text-slate-500 mt-4 mb-2 ml-2">ASSIGNMENTS</div>';
+            
+            quizData.forEach((week, index) => {
+                const btn = document.createElement('button');
+                btn.onclick = () => scrollToWeek(week.id);
+                btn.className = 'nav-link w-full text-left p-3 rounded-xl hover:bg-white/5 transition flex items-center gap-3 text-slate-300';
+                btn.innerHTML = `
+                    <span class="w-8 h-8 rounded-lg bg-violet-500/20 flex items-center justify-center text-violet-400 text-sm font-bold">${index}</span>
+                    <span class="text-sm truncate">${week.title}</span>
+                `;
+                nav.appendChild(btn);
+            });
+        }
+
+        // Render Quiz Sections
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = '';
+            totalQuestions = 0;
+
+            quizData.forEach((week, wIdx) => {
+                const section = document.createElement('section');
+                section.id = week.id;
+                section.className = 'glass p-8 space-y-8';
+                
+                section.innerHTML = `
+                    <div class="border-b border-white/10 pb-4 mb-8">
+                        <h3 class="text-2xl font-bold text-violet-300">${w
